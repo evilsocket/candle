@@ -190,7 +190,7 @@ impl MetalDevice {
             self.device
                 .new_buffer_with_data(data.as_ptr() as *const c_void, size, options);
         let mut buffers = self.buffers.write().map_err(MetalError::from)?;
-        let subbuffers = buffers.entry((size, optionsd)).or_insert(vec![]);
+        let subbuffers = buffers.entry((size, options)).or_insert(vec![]);
 
         let new_buffer = Arc::new(new_buffer);
         subbuffers.push(new_buffer.clone());
