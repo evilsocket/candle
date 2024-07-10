@@ -19,7 +19,12 @@ const CAST: &str = include_str!("cast.metal");
 const CONV: &str = include_str!("conv.metal");
 const REDUCE: &str = include_str!("reduce.metal");
 const RANDOM: &str = include_str!("random.metal");
-const MFA: &[u8] = include_bytes!("libMetalFlashAttention.metallib");
+
+#[cfg(target_os = "ios")]
+const MFA: &[u8] = include_bytes!("ios_libMetalFlashAttention.metallib");
+#[cfg(not(target_os = "ios"))]
+const MFA: &[u8] = include_bytes!("macos_libMetalFlashAttention.metallib");
+
 const QUANTIZED: &str = include_str!("quantized.metal");
 const SORT: &str = include_str!("sort.metal");
 
