@@ -1799,10 +1799,16 @@ impl BackendDevice for MetalDevice {
             Ok(val) => val.parse()?,
             _ => 50,
         };
+        // https://github.com/huggingface/candle/issues/2322
+        #[cfg(target_os = "ios")]
+        let options = MTLResourceOptions::StorageModeShared;
+        #[cfg(not(target_os = "ios"))]
+        let options = MTLResourceOptions::StorageModeManaged;
+
         let seed = Arc::new(Mutex::new(device.new_buffer_with_data(
             [299792458].as_ptr() as *const c_void,
             4,
-            MTLResourceOptions::StorageModeManaged,
+            options,
         )));
         Ok(Self {
             id: DeviceId::new(),

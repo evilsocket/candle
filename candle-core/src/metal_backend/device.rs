@@ -164,7 +164,13 @@ impl MetalDevice {
     /// synchronization when the CPU memory is modified
     /// Used as a bridge to gather data back from the GPU
     pub fn new_buffer_managed(&self, size: NSUInteger) -> Result<Arc<Buffer>> {
-        self.allocate_buffer(size, MTLResourceOptions::StorageModeManaged, "managed")
+        // https://github.com/huggingface/candle/issues/2322
+        #[cfg(target_os = "ios")]
+        let options = MTLResourceOptions::StorageModeShared;
+        #[cfg(not(target_os = "ios"))]
+        let options = MTLResourceOptions::StorageModeManaged;
+
+        self.allocate_buffer(size, options, "managed")
     }
 
     /// Creates a new buffer from data.
@@ -174,15 +180,17 @@ impl MetalDevice {
     /// allocates the buffer and copies over the existing data before returning the MTLBuffer.
     pub fn new_buffer_with_data<T>(&self, data: &[T]) -> Result<Arc<Buffer>> {
         let size = core::mem::size_of_val(data) as NSUInteger;
-        let new_buffer = self.device.new_buffer_with_data(
-            data.as_ptr() as *const c_void,
-            size,
-            MTLResourceOptions::StorageModeManaged,
-        );
+        // https://github.com/huggingface/candle/issues/2322
+        #[cfg(target_os = "ios")]
+        let options = MTLResourceOptions::StorageModeShared;
+        #[cfg(not(target_os = "ios"))]
+        let options = MTLResourceOptions::StorageModeManaged;
+
+        let new_buffer =
+            self.device
+                .new_buffer_with_data(data.as_ptr() as *const c_void, size, options);
         let mut buffers = self.buffers.write().map_err(MetalError::from)?;
-        let subbuffers = buffers
-            .entry((size, MTLResourceOptions::StorageModeManaged))
-            .or_insert(vec![]);
+        let subbuffers = buffers.entry((size, optionsd)).or_insert(vec![]);
 
         let new_buffer = Arc::new(new_buffer);
         subbuffers.push(new_buffer.clone());

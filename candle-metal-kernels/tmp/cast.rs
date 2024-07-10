@@ -37,6 +37,10 @@ fn run_cast_bench<T: Clone>(
     contiguous: &[&'static str],
 ) {
     let command_queue = device.new_command_queue();
+    // https://github.com/huggingface/candle/issues/2322
+    #[cfg(target_os = "ios")]
+    let options = MTLResourceOptions::StorageModeShared;
+    #[cfg(not(target_os = "ios"))]
     let options = MTLResourceOptions::StorageModeManaged;
 
     let iterations = 1000;
